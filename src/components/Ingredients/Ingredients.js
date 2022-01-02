@@ -1,46 +1,128 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import IngredientList from './IngredientList';
 import IngredientForm from './IngredientForm';
 import Search from './Search';
-import { useCallback } from 'react/cjs/react.development';
+import { useCallback, useReducer } from 'react/cjs/react.development';
+import ErrorModal from '../UI/ErrorModal' 
 
-function Ingredients() {
-  const [ingredients, setIngredients] = useState([])
+const ingredientReducer = (currentIngredients, action) =>{
+  switch(action.type){
+    case 'SET':
+      return action.ingredients
+    case 'ADD':
+      return [...currentIngredients,action.ingredient]
+    case 'DELETE':
+      return currentIngredients.filter(ing => ing.id !== action.id)
+    default:
+      throw new Error('Something is not right with Reducer')
+  }
+}
+
+const httpReducer = (state, action)=>{
+  switch(action.type){
+    case 'SENT':
+      return {loading:true, error:null} 
+    case 'RESPOND':
+      return { ...state,loading:false}
+    case 'ERROR':
+      return {loading:false,error:action.errorMessage}
+    case 'CLEAR':
+      return {...state,error:null}
+    default:
+      console.log(action)
+      throw new Error('Something is not right with Reducer')
+  }
+}
+
+const Ingredients = ()=> {
+  const [userIngredients, dispatch] = useReducer(ingredientReducer, [])
+  // const [ingredients, setIngredients] = useState([])
+  // const [isLodaing,setIsLoading]= useState(false)
+  // const [error,setError] = useState('')
+  const [httpState,httpDispatch]=useReducer(httpReducer,{loading:false,error:null})
 
   const onSearch= useCallback(searchedIngredients=>{
-    setIngredients(searchedIngredients)
+    // setIngredients(searchedIngredients)
+    dispatch({
+      type:'SET',
+      ingredients:searchedIngredients
+    })
   },[])
 
-  
-
-  const addIngredientHandler = ingredient =>{
+  const addIngredientHandler = useCallback( ingredient =>{
+    // setIsLoading(true)
+    httpDispatch({type:'SENT'})
     fetch('https://ingredients-list-71-default-rtdb.asia-southeast1.firebasedatabase.app/ingredients.json',{
       method:'POST',
       body:JSON.stringify(ingredient),
       headers:{ 'Content-Type':'application/json' }
     }).then(response=>response.json())
     .then(data=>{
-      setIngredients(prevIngredients => [
-        ...prevIngredients,
-        {...ingredient, id:data.name}
-      ])
+      httpDispatch({type:'RESPOND'})
+      // setIsLoading(false)
+      // setIngredients(prevIngredients => [
+      //   ...prevIngredients,
+      //   {...ingredient, id:data.name}
+      // ])
+      dispatch({
+        type:'ADD',
+        ingredient:{id:data.name,...ingredient}
+      })
+    }).catch(error=>{
+      // setError('Something went wrong!😞')
+      httpDispatch({
+        type:'ERROR',
+        error:'Something went wrong!😞'
+      })
     })
+  },[])
 
+  const removeIngredientHandler = useCallback( ingridientId=>{
+    // setIsLoading(true)
+    httpDispatch({type:'SENT'})
+    fetch(`https://ingredients-list-71-default-rtdb.asia-southeast1.firebasedatabase.app/ingredients/${ingridientId}.json`,{
+      method:'DELETE',
+    }).then(response=>{
+      // setIsLoading(false)
+      httpDispatch({type:'RESPOND'})
+      dispatch({
+        type:'DELETE',
+        id:ingridientId
+      })
+    }).catch(error=>{
+      // setError('Something went wrong!😞')
+      httpDispatch({
+        type:'ERROR',
+        errorMessage:'Something went wrong!😞'
+      })
+    })
     
-  }
+  },[])
 
-  const removeIngredientHandler =ingridientId=>{
-    setIngredients(prevIngredients=> 
-      prevIngredients.filter(ingredient=>ingredient.id!==ingridientId))
-  }
+  const clearError=useCallback( ()=>{
+    httpDispatch({type:'CLEAR'})
+  },[])
+
+  const ingredientList = useMemo(()=>{
+    return(
+      <IngredientList 
+          ingredients={userIngredients} 
+          onRemoveItem={removeIngredientHandler}
+        />
+    )
+  }, [userIngredients, removeIngredientHandler])
 
   return (
     <div className="App">
-      <IngredientForm addIngredientHandler={addIngredientHandler}/>
+      {httpState.error && <ErrorModal onClose={clearError}>{httpState.error}</ErrorModal>}
+      <IngredientForm 
+        addIngredientHandler={addIngredientHandler}
+        loading={httpState.loading}
+      />
 
       <section>
         <Search  onSearch={onSearch}/>
-        <IngredientList ingredients={ingredients} onRemoveItem={removeIngredientHandler}/>
+        {ingredientList}
       </section>
     </div>
   );
