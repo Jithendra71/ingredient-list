@@ -5,10 +5,14 @@ import { AuthContext } from './context/auth-context';
 
 const a = "hello world";
 console.log(a);
+const string = 'jithendra'
+console.log(string)
+
 
 const App = props => {
   const authContext = useContext(AuthContext)
 
+  
   if(authContext.isAuth)
   {return <Ingredients />}
   return<Auth/>
