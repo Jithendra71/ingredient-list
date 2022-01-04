@@ -36,13 +36,9 @@ const httpReducer = (state, action)=>{
 
 const Ingredients = ()=> {
   const [userIngredients, dispatch] = useReducer(ingredientReducer, [])
-  // const [ingredients, setIngredients] = useState([])
-  // const [isLodaing,setIsLoading]= useState(false)
-  // const [error,setError] = useState('')
   const [httpState,httpDispatch]=useReducer(httpReducer,{loading:false,error:null})
 
   const onSearch= useCallback(searchedIngredients=>{
-    // setIngredients(searchedIngredients)
     dispatch({
       type:'SET',
       ingredients:searchedIngredients
@@ -50,7 +46,6 @@ const Ingredients = ()=> {
   },[])
 
   const addIngredientHandler = useCallback( ingredient =>{
-    // setIsLoading(true)
     httpDispatch({type:'SENT'})
     fetch('https://ingredients-list-71-default-rtdb.asia-southeast1.firebasedatabase.app/ingredients.json',{
       method:'POST',
@@ -59,17 +54,11 @@ const Ingredients = ()=> {
     }).then(response=>response.json())
     .then(data=>{
       httpDispatch({type:'RESPOND'})
-      // setIsLoading(false)
-      // setIngredients(prevIngredients => [
-      //   ...prevIngredients,
-      //   {...ingredient, id:data.name}
-      // ])
       dispatch({
         type:'ADD',
         ingredient:{id:data.name,...ingredient}
       })
     }).catch(error=>{
-      // setError('Something went wrong!😞')
       httpDispatch({
         type:'ERROR',
         error:'Something went wrong!😞'
@@ -78,7 +67,6 @@ const Ingredients = ()=> {
   },[])
 
   const removeIngredientHandler = useCallback( ingridientId=>{
-    // setIsLoading(true)
     httpDispatch({type:'SENT'})
     fetch(`https://ingredients-list-71-default-rtdb.asia-southeast1.firebasedatabase.app/ingredients/${ingridientId}.json`,{
       method:'DELETE',
@@ -90,7 +78,6 @@ const Ingredients = ()=> {
         id:ingridientId
       })
     }).catch(error=>{
-      // setError('Something went wrong!😞')
       httpDispatch({
         type:'ERROR',
         errorMessage:'Something went wrong!😞'
