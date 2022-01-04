@@ -5,8 +5,9 @@ import { AuthContext } from './context/auth-context';
 
 const a = "hello world";
 console.log(a);
-const string = 'jithendra'
-console.log(string)
+const string = ['jithendra', 'manta', 'varchar'];
+const b = 'varchas';
+console.log(string,b);
 
 
 const App = props => {
