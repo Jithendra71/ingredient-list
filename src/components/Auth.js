@@ -5,6 +5,7 @@ import './Auth.css';
 
 const Auth = props => {
 
+  // delete this commit
   const authContext = useContext(AuthContext)
 
   const loginHandler = () => {
